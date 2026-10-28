@@ -1,0 +1,74 @@
+R2 Router Configuration
+========================
+
+Project: Secure Multi-Department Office Network
+Device hostname shown in source configuration: R2
+Source: Cisco Packet Tracer `show running-config`
+
+SECURITY NOTE
+-------------
+The original enable-secret hash has been omitted from this public documentation copy.
+This is not a complete copy-paste-ready configuration; configure credentials privately
+if rebuilding the lab.
+
+!
+version 15.1
+no service timestamps log datetime msec
+no service timestamps debug datetime msec
+service password-encryption
+!
+hostname R2
+!
+! enable secret omitted from public documentation
+!
+ip cef
+no ipv6 cef
+!
+spanning-tree mode pvst
+!
+interface GigabitEthernet0/0
+ ip address 10.0.0.2 255.255.255.252
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/1
+ ip address 192.168.40.1 255.255.255.0
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/2
+ no ip address
+ duplex auto
+ speed auto
+ shutdown
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+router ospf 1
+ router-id 2.2.2.2
+ log-adjacency-changes
+ network 10.0.0.0 0.0.0.3 area 0
+ network 192.168.40.0 0.0.0.255 area 0
+!
+ip classless
+ip flow-export version 9
+!
+line con 0
+!
+line aux 0
+!
+line vty 0 4
+ login
+!
+end
+
+Notes
+-----
+- G0/0: 10.0.0.2/30 (transit link to R1's 10.0.0.1/30 interface)
+- G0/1: 192.168.40.1/24 (LAN gateway)
+- OSPF process 1, router ID 2.2.2.2
+- G0/2 is administratively shut down
+- The supplied configuration does not show DHCP, NAT, or ACL configuration on R2.
+- Verify OSPF adjacency and reachability in Packet Tracer before documenting them as successful.
