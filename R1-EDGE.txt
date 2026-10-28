@@ -1,0 +1,128 @@
+R1-EDGE Router Configuration
+============================
+Sanitized documentation copy based on the user's Cisco Packet Tracer `show running-config`.
+
+SECURITY NOTE:
+Credential hashes have been omitted before publishing. This is documentation, not a complete copy-paste-ready configuration. Set up a private username/secret in the lab if rebuilding.
+
+!
+version 15.1
+no service timestamps log datetime msec
+no service timestamps debug datetime msec
+service password-encryption
+hostname R1
+!
+! enable secret omitted from public documentation
+!
+ip dhcp excluded-address 192.168.10.1 192.168.10.20
+ip dhcp excluded-address 192.168.20.1 192.168.20.20
+ip dhcp excluded-address 192.168.30.1 192.168.30.20
+!
+ip dhcp pool HR
+ network 192.168.10.0 255.255.255.0
+ default-router 192.168.10.1
+ dns-server 8.8.8.8
+ip dhcp pool IT
+ network 192.168.20.0 255.255.255.0
+ default-router 192.168.20.1
+ dns-server 8.8.8.8
+ip dhcp pool ACCOUNTS
+ network 192.168.30.0 255.255.255.0
+ default-router 192.168.30.1
+ dns-server 8.8.8.8
+!
+ip cef
+no ipv6 cef
+!
+! username admin secret omitted from public documentation
+!
+no ip domain-lookup
+ip domain-name official.local
+spanning-tree mode pvst
+!
+interface GigabitEthernet0/0
+ ip address 203.0.113.2 255.255.255.252
+ ip nat outside
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/1
+ no ip address
+ duplex auto
+ speed auto
+!
+interface GigabitEthernet0/1.10
+ encapsulation dot1Q 10
+ ip address 192.168.10.1 255.255.255.0
+ ip nat inside
+!
+interface GigabitEthernet0/1.20
+ encapsulation dot1Q 20
+ ip address 192.168.20.1 255.255.255.0
+ ip nat inside
+ ip access-group IT-BLOCK-ACCOUNTS in
+!
+interface GigabitEthernet0/1.30
+ encapsulation dot1Q 30
+ ip address 192.168.30.1 255.255.255.0
+ ip nat inside
+!
+interface GigabitEthernet0/1.99
+ encapsulation dot1Q 99
+ ip address 192.168.99.1 255.255.255.0
+!
+interface GigabitEthernet0/2
+ ip address 10.0.0.1 255.255.255.252
+ ip nat inside
+ duplex auto
+ speed auto
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+router ospf 1
+ router-id 1.1.1.1
+ log-adjacency-changes
+ network 192.168.10.0 0.0.0.255 area 0
+ network 192.168.20.0 0.0.0.255 area 0
+ network 192.168.30.0 0.0.0.255 area 0
+ network 192.168.99.0 0.0.0.255 area 0
+ network 10.0.0.0 0.0.0.3 area 0
+ default-information originate
+!
+ip nat inside source list 1 interface GigabitEthernet0/0 overload
+ip classless
+ip route 0.0.0.0 0.0.0.0 203.0.113.1
+ip flow-export version 9
+!
+access-list 1 permit 192.168.10.0 0.0.0.255
+access-list 1 permit 192.168.20.0 0.0.0.255
+access-list 1 permit 192.168.30.0 0.0.0.255
+!
+ip access-list extended IT-BLOCK-ACCOUNTS
+ deny ip 192.168.20.0 0.0.0.255 192.168.30.0 0.0.0.255
+ permit ip any any
+!
+banner motd ^CUNAUTHORIZED ACCESS PROHIBITED^C
+!
+line con 0
+line aux 0
+line vty 0 4
+ login local
+ transport input ssh
+!
+end
+
+Notes
+-----
+- VLAN 10 gateway: 192.168.10.1/24 (HR)
+- VLAN 20 gateway: 192.168.20.1/24 (IT)
+- VLAN 30 gateway: 192.168.30.1/24 (ACCOUNTS)
+- VLAN 99 gateway: 192.168.99.1/24
+- WAN G0/0: 203.0.113.2/30; default next hop: 203.0.113.1
+- G0/2: 10.0.0.1/30
+- OSPF process 1, router ID 1.1.1.1
+- NAT/PAT uses ACL 1 and G0/0 overload
+- IT-BLOCK-ACCOUNTS denies IT subnet traffic to ACCOUNTS subnet
+- Verify interfaces, trunking, OSPF neighbors, NAT, DHCP, and ACL behavior in Packet Tracer.
